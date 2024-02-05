@@ -1,0 +1,90 @@
+library(PNADcIBGE)
+library(survey)
+library(dplyr)
+#Importando dados offline
+pnad2022_df <- read_pnadc(
+  microdata = "PNADC_2022_visita1.txt",
+  input_txt = "input_PNADC_2022_visita1_20231129.txt"
+)
+#Transformando base de dados em survey design para usar o pacote survey
+pnad2022_dsg <- pnadc_design(pnad2022_df)
+#descobrindo os quantis
+quantis <- coef(svyquantile(
+  ~VD5005,
+  pnad2022_dsg,
+  quantiles = c(
+    .1, .2, .3, .4, .5, .6, .7, .8, .9),
+  na.rm = TRUE
+))
+quantis <- as_data_frame(quantis)
+#descobrindo massa total de Rendimento (efetivo) domiciliar per capita
+total <- coef(svytotal(
+  ~VD5005,
+  pnad2022_dsg,
+  na.rm = TRUE
+))
+#Fração do Rendimento (efetivo) domiciliar per capita apropriado pelos 10%
+D1 <- coef(svytotal(
+  ~VD5005,
+  subset(pnad2022_dsg, VD5005 <= quantis$value[1]
+  )))
+massa_D1 <- (D1/total)*100
+#Fração do Rendimento (efetivo) domiciliar per capita apropriado pelos 20%
+D2 <- coef(svytotal(
+  ~VD5005,
+  subset(pnad2022_dsg, VD5005 <= quantis$value[2]
+  )))
+massa_D2 <- (D2/total)*100
+#Fração do Rendimento (efetivo) domiciliar per capita apropriado pelos 30%
+D3 <- coef(svytotal(
+  ~VD5005,
+  subset(pnad2022_dsg, VD5005 <= quantis$value[3]
+  )))
+massa_D3 <- (D3/total)*100
+#Fração do Rendimento (efetivo) domiciliar per capita apropriado pelos 40%
+D4 <- coef(svytotal(
+  ~VD5005,
+  subset(pnad2022_dsg, VD5005 <= quantis$value[4]
+  )))
+massa_D4 <- (D4/total)*100
+#Fração do Rendimento (efetivo) domiciliar per capita apropriado pelos 50%
+D5 <- coef(svytotal(
+  ~VD5005,
+  subset(pnad2022_dsg, VD5005 <= quantis$value[5]
+  )))
+massa_D5 <- (D5/total)*100
+#Fração do Rendimento (efetivo) domiciliar per capita apropriado pelos 60%
+D6 <- coef(svytotal(
+  ~VD5005,
+  subset(pnad2022_dsg, VD5005 <= quantis$value[6]
+  )))
+massa_D6 <- (D6/total)*100
+#Fração do Rendimento (efetivo) domiciliar per capita apropriado pelos 70%
+D7 <- coef(svytotal(
+  ~VD5005,
+  subset(pnad2022_dsg, VD5005 <= quantis$value[7]
+  )))
+massa_D7 <- (D7/total)*100
+#Fração do Rendimento (efetivo) domiciliar per capita apropriado pelos 80%
+D8 <- coef(svytotal(
+  ~VD5005,
+  subset(pnad2022_dsg, VD5005 <= quantis$value[8]
+  )))
+massa_D8 <- (D8/total)*100
+#Fração do Rendimento (efetivo) domiciliar per capita apropriado pelos 90%
+D9 <- coef(svytotal(
+  ~VD5005,
+  subset(pnad2022_dsg, VD5005 <= quantis$value[9]
+  )))
+massa_D9 <- (D9/total)*100
+#Fração do Rendimento (efetivo) domiciliar per capita apropriado pelos 100%
+massa_D10 <- 100
+#Todos os valores
+Acumulado_total <- c(
+  massa_D1, massa_D2, massa_D3, massa_D4, massa_D5,
+  massa_D6, massa_D7, massa_D8, massa_D9, massa_D10)
+#Curva de Lorenz
+install.packages("ineq")
+library(ineq)
+lorenz_curve <- ineq::Lc(Acumulado_total)
+plot(lorenz_curve, col = "blue", lwd = 2, main = "Curva de Lorenz - PNAD2022")
