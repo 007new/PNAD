@@ -1,6 +1,7 @@
 library(PNADcIBGE)
 library(survey)
 library(dplyr)
+library(ineq)
 #Importando dados offline
 pnad2022_df <- read_pnadc(
   microdata = "PNADC_2022_visita1.txt",
@@ -84,7 +85,5 @@ Acumulado_total <- c(
   massa_D1, massa_D2, massa_D3, massa_D4, massa_D5,
   massa_D6, massa_D7, massa_D8, massa_D9, massa_D10)
 #Curva de Lorenz
-install.packages("ineq")
-library(ineq)
 lorenz_curve <- ineq::Lc(Acumulado_total)
 plot(lorenz_curve, col = "blue", lwd = 2, main = "Curva de Lorenz - PNAD2022")
