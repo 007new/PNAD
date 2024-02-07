@@ -1,0 +1,36 @@
+# Estimando proporção de pessoas sob risco de pobreza. 
+# O Limiar de risco de pobreza é definido a 60% da renda mediana.
+library(PNADcIBGE)
+library(survey)
+library(convey)
+#Importando dados offline 
+pnad2022_df <- read_pnadc(
+  microdata = "PNADC_2022_visita1.txt",
+  input_txt = "input_PNADC_2022_visita1_20231129.txt"
+)
+pnad2022_dsg <- pnadc_design(pnad2022_df)
+#Estimando quando é 60% da mediana (Limiar)
+mediana <- coef(svyquantile(~VD5005,
+            pnad2022_dsg,
+            quantiles = .5,
+            na.rm = T))
+Limiar <- mediana*0.6
+#Estimando população abaixo do limiar da pobreza 
+pop_sex <- coef(svytotal(~V2007,
+              subset(pnad2022_dsg,VD5005 <= Limiar),
+         na.rm = T))
+pop_total <- pop_sex[1]+pop_sex[2]
+#Estimando o total da população 
+total_sex <- coef(svytotal(~V2007,
+                       pnad2022_dsg,
+                       na.rm = TRUE))
+TOTAL <- total_sex[1]+total_sex[2]
+#Proporção de pessoas abaixo do limiar (resultado)
+resultado <- pop_total/TOTAL
+#Usando o pacote convey p/ comparar o resultado 
+pnad_prep <- convey_prep(pnad2022_dsg)
+svyarpr(~VD5005,
+        pnad_prep,
+        quantiles = 0.5,
+        percent = 0.6,
+        na.rm=TRUE)
